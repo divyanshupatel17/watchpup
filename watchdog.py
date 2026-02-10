@@ -75,7 +75,6 @@ def diff_marks(old, new):
                 "old": o
             })
         else:
-            # only care about actual value changes
             if o["scored_mark"] != n["scored_mark"]:
                 diffs.append({
                     "type": "changed",
@@ -154,8 +153,6 @@ def main():
             print(now(), "Error while checking:", e)
 
         time.sleep(INTERVAL_SECONDS)
-
-
 
 if __name__ == "__main__":
     main()
