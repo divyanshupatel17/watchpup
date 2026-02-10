@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ```
 
 TODO:
- - [ ] show actual change in the data
+ - [X] show actual change in the data
  - [ ] error handlers
  - [ ] automatic cookie fetching
  - [ ] extend to more than just the marks page
