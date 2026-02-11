@@ -43,14 +43,7 @@ class ProfileInfoService:
             return None
     
     def extract_profile(self) -> Optional[Dict[str, Any]]:
-        """
-        Extract student profile information from VTOP
-        
-        Returns:
-            Dictionary containing profile data or None if extraction fails
-        """
-        print("\n[ProfileInfo] Extracting profile information...")
-        
+        """Extract student profile information from VTOP"""
         csrf_token = self._get_csrf_token()
         authorized_id = self._get_authorized_id()
         
@@ -58,7 +51,6 @@ class ProfileInfoService:
             print("[ProfileInfo] Failed to get required tokens")
             return None
         
-        # Prepare POST data
         post_data = {
             'verifyMenu': 'true',
             'authorizedID': authorized_id,
@@ -67,7 +59,6 @@ class ProfileInfoService:
         }
         
         try:
-            # POST to profile view endpoint
             response = self.session.post(
                 f"{self.base_url}/studentsRecord/StudentProfileAllView",
                 data=post_data,
@@ -75,24 +66,18 @@ class ProfileInfoService:
             )
             
             if response.status_code != 200:
-                print(f"[ProfileInfo] Request failed with status {response.status_code}")
                 return None
             
-            # Check if response contains profile data
             if 'personal information' not in response.text.lower():
-                print("[ProfileInfo] Response does not contain profile data")
                 return None
             
-            # Parse HTML response
             soup = BeautifulSoup(response.text, 'html.parser')
             profile = {}
             
-            # Extract name (bold paragraph)
             name_element = soup.find('p', style=lambda x: x and 'font-weight: bold' in x)
             if name_element:
                 profile['name'] = name_element.get_text(strip=True)
             
-            # Extract fields from labels
             labels = soup.find_all('label', class_=lambda x: x and 'col-form-label' in x)
             for label in labels:
                 label_text = label.get_text(strip=True).upper()
@@ -114,7 +99,6 @@ class ProfileInfoService:
                 elif 'SCHOOL NAME' in label_text:
                     profile['schoolName'] = value
             
-            # Extract fields from table rows
             rows = soup.find_all('tr')
             for row in rows:
                 cells = row.find_all('td')
@@ -134,10 +118,8 @@ class ProfileInfoService:
                         profile['dateOfBirth'] = value
             
             if profile.get('name'):
-                print(f"[ProfileInfo] Profile extracted: {profile['name']}")
                 return profile
             else:
-                print("[ProfileInfo] No profile data found")
                 return None
                 
         except Exception as e:
@@ -145,19 +127,10 @@ class ProfileInfoService:
             return None
     
     def save_profile(self, profile_data: Dict[str, Any]) -> bool:
-        """
-        Save profile data to JSON file with timestamps
-        
-        Args:
-            profile_data: Dictionary containing profile information
-            
-        Returns:
-            True if save successful, False otherwise
-        """
+        """Save profile data to JSON file with timestamps"""
         try:
             now = datetime.now()
             
-            # Prepare data with timestamps
             data_to_save = {
                 'profile': profile_data,
                 'metadata': {
@@ -167,24 +140,20 @@ class ProfileInfoService:
                 }
             }
             
-            # Load existing data if file exists
             existing_data = None
             if os.path.exists(self.data_file):
                 try:
                     with open(self.data_file, 'r', encoding='utf-8') as f:
                         existing_data = json.load(f)
-                except Exception as e:
-                    print(f"[ProfileInfo] Warning: Could not read existing file: {e}")
+                except Exception:
+                    pass
             
-            # Add history tracking
             if existing_data:
                 data_to_save['previousUpdate'] = existing_data.get('metadata', {})
             
-            # Save to file
             with open(self.data_file, 'w', encoding='utf-8') as f:
                 json.dump(data_to_save, f, indent=2, ensure_ascii=False)
             
-            print(f"[ProfileInfo] Data saved to {self.data_file}")
             return True
             
         except Exception as e:
@@ -192,12 +161,7 @@ class ProfileInfoService:
             return False
     
     def get_saved_profile(self) -> Optional[Dict[str, Any]]:
-        """
-        Load saved profile data from file
-        
-        Returns:
-            Dictionary containing profile data or None if file doesn't exist
-        """
+        """Load saved profile data from file"""
         if not os.path.exists(self.data_file):
             return None
         
@@ -209,12 +173,7 @@ class ProfileInfoService:
             return None
     
     def run(self) -> bool:
-        """
-        Execute profile extraction and save
-        
-        Returns:
-            True if successful, False otherwise
-        """
+        """Execute profile extraction and save"""
         profile = self.extract_profile()
         if profile:
             return self.save_profile(profile)

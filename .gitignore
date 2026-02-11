@@ -39,6 +39,9 @@ credentials.json
 data/
 data/*.json
 
+# State files
+last_state.json
+
 # Debug files
 debug/
 debug/*.html

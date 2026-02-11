@@ -3,8 +3,13 @@ VTOP Authentication System - Main Entry Point
 """
 import asyncio
 import sys
+import os
+from dotenv import load_dotenv
 from authentication import AuthService, AuthError
-from data_service import ProfileInfoService
+from data_service import ProfileInfoService, AttendanceDataService, MarksDataService
+
+# Load environment variables
+load_dotenv()
 
 
 async def main():
@@ -18,34 +23,25 @@ async def main():
     if len(sys.argv) >= 3:
         username = sys.argv[1]
         password = sys.argv[2]
+        semester_id = sys.argv[3] if len(sys.argv) >= 4 else None
     else:
-        import os
-        import json
+        # Load from environment variables
+        username = os.getenv('VTOP_USERNAME', '').strip()
+        password = os.getenv('VTOP_PASSWORD', '').strip()
+        semester_id = os.getenv('VTOP_SEMESTER_ID', '').strip()
         
-        creds_file = 'credentials.json'
-        if os.path.exists(creds_file):
-            try:
-                with open(creds_file, 'r') as f:
-                    data = json.load(f)
-                    username = data.get('username', '').strip()
-                    password = data.get('password', '').strip()
-                    
-                if username and password:
-                    print(f"Loaded credentials for user: {username}")
-                else:
-                    print(f"Warning: Credentials file found but missing username or password")
-            except Exception as e:
-                print(f"Warning: Error reading credentials file: {e}")
-                username = ""
-                password = ""
+        if username and password:
+            print(f"Loaded credentials from .env file")
+            print(f"Username: {username}")
+            if semester_id:
+                print(f"Semester ID: {semester_id}")
         else:
-            username = ""
-            password = ""
-
-        if not username or not password:
-            print("Enter your VTOP credentials:\n")
+            print("No credentials found in .env file")
+            print("\nEnter your VTOP credentials:\n")
             username = input("Username: ").strip()
             password = input("Password: ").strip()
+            if not semester_id:
+                semester_id = input("Semester ID (optional): ").strip()
             print()
     
     if not username or not password:
@@ -85,33 +81,58 @@ async def main():
             
             # Automatically extract profile information
             print("\n" + "="*70)
-            print("EXTRACTING PROFILE INFORMATION")
+            print("EXTRACTING DATA FROM VTOP")
             print("="*70)
             
+            # Step 1: Profile Information
+            print("\n[Step 1/3] Extracting profile information...")
             profile_service = ProfileInfoService(auth_service.session)
             if profile_service.run():
-                print("\nProfile extraction completed successfully!")
-                
                 saved_data = profile_service.get_saved_profile()
                 if saved_data:
                     profile = saved_data.get('profile', {})
-                    metadata = saved_data.get('metadata', {})
-                    
-                    print("\nProfile Summary:")
+                    print(f"   Status: Done")
                     if profile.get('name'):
                         print(f"   Name: {profile['name']}")
-                    if profile.get('registerNumber'):
-                        print(f"   Register Number: {profile['registerNumber']}")
-                    if profile.get('program'):
-                        print(f"   Program: {profile['program']}")
-                    if profile.get('vitEmail'):
-                        print(f"   Email: {profile['vitEmail']}")
-                    
-                    print(f"\n   Data saved to: {profile_service.data_file}")
-                    print(f"   Last updated: {metadata.get('lastUpdatedHuman', 'N/A')}")
             else:
-                print("\nWarning: Profile extraction failed")
-                print("   You can try running the extraction again later")
+                print("   Status: Error - Profile extraction failed")
+            
+            # Step 2: Attendance Data
+            if semester_id:
+                print(f"\n[Step 2/3] Extracting attendance data...")
+                attendance_service = AttendanceDataService(auth_service.session)
+                if attendance_service.run(semester_id):
+                    saved_data = attendance_service.get_saved_attendance()
+                    if saved_data:
+                        metadata = saved_data.get('metadata', {})
+                        print(f"   Status: Done")
+                        print(f"   Total subjects: {metadata.get('totalSubjects', 0)}")
+                        print(f"   Overall attendance: {metadata.get('overallPercentage', 0)}%")
+                else:
+                    print("   Status: Error - Attendance extraction failed")
+            else:
+                print(f"\n[Step 2/3] Skipped - No semester ID provided")
+            
+            # Step 3: Marks Data
+            if semester_id:
+                print(f"\n[Step 3/3] Extracting marks data...")
+                marks_service = MarksDataService(auth_service.session)
+                if marks_service.run(semester_id):
+                    saved_data = marks_service.get_saved_marks()
+                    if saved_data:
+                        metadata = saved_data.get('metadata', {})
+                        print(f"   Status: Done")
+                        print(f"   Total courses: {metadata.get('totalCourses', 0)}")
+                        print(f"   Total assessments: {metadata.get('totalAssessments', 0)}")
+                else:
+                    print("   Status: Error - Marks extraction failed")
+            else:
+                print(f"\n[Step 3/3] Skipped - No semester ID provided")
+            
+            print("\n" + "="*70)
+            print("DATA EXTRACTION COMPLETE")
+            print("="*70)
+            print(f"\nAll data saved to: data/")
             
         else:
             print("AUTHENTICATION FAILED")
