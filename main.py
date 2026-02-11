@@ -49,13 +49,21 @@ async def main():
         print("\nUsage:")
         print("  python main.py <username> <password>")
         print("  or run: python main.py (for interactive mode)")
-        return
+        sys.exit(1)
     
     auth_service = AuthService()
     
     try:
         print("Initializing captcha recognition model...")
-        await auth_service.initialize('authentication/captcha/vellore_weights.json')
+        
+        # Check if weights file exists
+        weights_path = 'authentication/captcha/vellore_weights.json'
+        if not os.path.exists(weights_path):
+            print(f"\nError: Model weights file not found: {weights_path}")
+            print("Please ensure the file exists in the correct location")
+            sys.exit(1)
+        
+        await auth_service.initialize(weights_path)
         
         print("\nStarting authentication process...\n")
         
@@ -84,54 +92,77 @@ async def main():
             print("EXTRACTING DATA FROM VTOP")
             print("="*70)
             
+            extraction_errors = []
+            
             # Step 1: Profile Information
             print("\n[Step 1/3] Extracting profile information...")
-            profile_service = ProfileInfoService(auth_service.session)
-            if profile_service.run():
-                saved_data = profile_service.get_saved_profile()
-                if saved_data:
-                    profile = saved_data.get('profile', {})
-                    print(f"   Status: Done")
-                    if profile.get('name'):
-                        print(f"   Name: {profile['name']}")
-            else:
-                print("   Status: Error - Profile extraction failed")
+            try:
+                profile_service = ProfileInfoService(auth_service.session)
+                if profile_service.run():
+                    saved_data = profile_service.get_saved_profile()
+                    if saved_data:
+                        profile = saved_data.get('profile', {})
+                        print(f"   Status: Done")
+                        if profile.get('name'):
+                            print(f"   Name: {profile['name']}")
+                else:
+                    print("   Status: Error - Profile extraction failed")
+                    extraction_errors.append("Profile extraction failed")
+            except Exception as e:
+                print(f"   Status: Error - {str(e)}")
+                extraction_errors.append(f"Profile: {str(e)}")
             
             # Step 2: Attendance Data
             if semester_id:
                 print(f"\n[Step 2/3] Extracting attendance data...")
-                attendance_service = AttendanceDataService(auth_service.session)
-                if attendance_service.run(semester_id):
-                    saved_data = attendance_service.get_saved_attendance()
-                    if saved_data:
-                        metadata = saved_data.get('metadata', {})
-                        print(f"   Status: Done")
-                        print(f"   Total subjects: {metadata.get('totalSubjects', 0)}")
-                        print(f"   Overall attendance: {metadata.get('overallPercentage', 0)}%")
-                else:
-                    print("   Status: Error - Attendance extraction failed")
+                try:
+                    attendance_service = AttendanceDataService(auth_service.session)
+                    if attendance_service.run(semester_id):
+                        saved_data = attendance_service.get_saved_attendance()
+                        if saved_data:
+                            metadata = saved_data.get('metadata', {})
+                            print(f"   Status: Done")
+                            print(f"   Total subjects: {metadata.get('totalSubjects', 0)}")
+                            print(f"   Overall attendance: {metadata.get('overallPercentage', 0)}%")
+                    else:
+                        print("   Status: Error - Attendance extraction failed")
+                        extraction_errors.append("Attendance extraction failed")
+                except Exception as e:
+                    print(f"   Status: Error - {str(e)}")
+                    extraction_errors.append(f"Attendance: {str(e)}")
             else:
                 print(f"\n[Step 2/3] Skipped - No semester ID provided")
             
             # Step 3: Marks Data
             if semester_id:
                 print(f"\n[Step 3/3] Extracting marks data...")
-                marks_service = MarksDataService(auth_service.session)
-                if marks_service.run(semester_id):
-                    saved_data = marks_service.get_saved_marks()
-                    if saved_data:
-                        metadata = saved_data.get('metadata', {})
-                        print(f"   Status: Done")
-                        print(f"   Total courses: {metadata.get('totalCourses', 0)}")
-                        print(f"   Total assessments: {metadata.get('totalAssessments', 0)}")
-                else:
-                    print("   Status: Error - Marks extraction failed")
+                try:
+                    marks_service = MarksDataService(auth_service.session)
+                    if marks_service.run(semester_id):
+                        saved_data = marks_service.get_saved_marks()
+                        if saved_data:
+                            metadata = saved_data.get('metadata', {})
+                            print(f"   Status: Done")
+                            print(f"   Total courses: {metadata.get('totalCourses', 0)}")
+                            print(f"   Total assessments: {metadata.get('totalAssessments', 0)}")
+                    else:
+                        print("   Status: Error - Marks extraction failed")
+                        extraction_errors.append("Marks extraction failed")
+                except Exception as e:
+                    print(f"   Status: Error - {str(e)}")
+                    extraction_errors.append(f"Marks: {str(e)}")
             else:
                 print(f"\n[Step 3/3] Skipped - No semester ID provided")
             
             print("\n" + "="*70)
-            print("DATA EXTRACTION COMPLETE")
-            print("="*70)
+            if extraction_errors:
+                print("DATA EXTRACTION COMPLETED WITH ERRORS")
+                print("="*70)
+                for error in extraction_errors:
+                    print(f"   - {error}")
+            else:
+                print("DATA EXTRACTION COMPLETE")
+                print("="*70)
             print(f"\nAll data saved to: data/")
             
         else:
@@ -154,24 +185,36 @@ async def main():
             
             if AuthError.is_retryable(error_code):
                 print("\nThis error is retryable. You can try again.")
+            
+            sys.exit(1)
         
         print("="*70 + "\n")
         
     except KeyboardInterrupt:
         print("\n\nProcess interrupted by user")
         print("="*70 + "\n")
-    except FileNotFoundError:
-        print("\nERROR: Model weights file 'authentication/captcha/vellore_weights.json' not found!")
+        sys.exit(130)
+    except FileNotFoundError as e:
+        print(f"\nERROR: File not found - {e}")
         print("\nInstructions:")
-        print("   1. Download the model weights from your VITverse app repository")
-        print("   2. Place 'vellore_weights.json' in authentication/captcha/ directory")
-        print("   3. The file should be from: assets/ml/vellore_weights.json")
+        print("   1. Ensure all required files are present")
+        print("   2. Check that 'authentication/captcha/vellore_weights.json' exists")
         print("="*70 + "\n")
+        sys.exit(1)
+    except ConnectionError as e:
+        print(f"\nCONNECTION ERROR: {e}")
+        print("\nPossible causes:")
+        print("   - No internet connection")
+        print("   - VTOP server is down")
+        print("   - Firewall blocking connection")
+        print("="*70 + "\n")
+        sys.exit(1)
     except Exception as e:
         print(f"\nUNEXPECTED ERROR: {e}")
         print("="*70 + "\n")
         import traceback
         traceback.print_exc()
+        sys.exit(1)
     finally:
         if 'auth_service' in locals():
             auth_service.logout()

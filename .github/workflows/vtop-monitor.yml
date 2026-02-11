@@ -10,6 +10,7 @@ on:
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent hanging
     
     steps:
     - name: Checkout code
@@ -36,6 +37,22 @@ jobs:
         echo "GMAIL_APP_PASSWORD=${{ secrets.GMAIL_APP_PASSWORD }}" >> .env
         echo "GMAIL_TO_EMAIL=${{ secrets.GMAIL_TO_EMAIL }}" >> .env
     
+    - name: Verify secrets are set
+      run: |
+        if [ -z "${{ secrets.VTOP_USERNAME }}" ]; then
+          echo "Error: VTOP_USERNAME secret not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.VTOP_PASSWORD }}" ]; then
+          echo "Error: VTOP_PASSWORD secret not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.GMAIL_EMAIL }}" ]; then
+          echo "Error: GMAIL_EMAIL secret not set"
+          exit 1
+        fi
+        echo "All required secrets are set"
+    
     - name: Download last state artifact
       uses: actions/download-artifact@v4
       with:
@@ -43,14 +60,53 @@ jobs:
         path: .
       continue-on-error: true
     
+    - name: Create data directory
+      run: mkdir -p data
+    
     - name: Run single check
-      run: python main.py
+      id: run_check
+      run: |
+        python main.py 2>&1 | tee run.log
+        echo "exit_code=$?" >> $GITHUB_OUTPUT
+      continue-on-error: true
+    
+    - name: Check run status
+      run: |
+        if [ -f "run.log" ]; then
+          echo "=== Run Log ==="
+          cat run.log
+          
+          if grep -q "AUTHENTICATION SUCCESSFUL" run.log; then
+            echo "✓ Authentication successful"
+          elif grep -q "AUTHENTICATION FAILED" run.log; then
+            echo "✗ Authentication failed"
+            exit 1
+          elif grep -q "Error:" run.log; then
+            echo "✗ Error occurred during run"
+            exit 1
+          fi
+        else
+          echo "✗ No log file generated"
+          exit 1
+        fi
     
     - name: Upload last state artifact
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: last-state
         path: |
           last_state.json
           data/*.json
         retention-days: 90
+    
+    - name: Upload logs on failure
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: error-logs
+        path: |
+          run.log
+          debug/*.html
+          debug/*.png
+        retention-days: 7
