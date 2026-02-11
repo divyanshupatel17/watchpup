@@ -6,13 +6,17 @@ from handlers.html import return_json
 from handlers.main_request import return_response
 from dotenv import load_dotenv
 import os
+import requests
 from datetime import datetime
 
 load_dotenv()
 
 INTERVAL_SECONDS = os.getenv("INTERVAL_SECONDS")
 INTERVAL_SECONDS = eval(INTERVAL_SECONDS)
+BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
+CHAT_ID = os.getenv("TG_CHAT_ID")
 STATE_FILE = Path("last_state.json")
+url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
 def handle_vtop():
     response = return_response()
@@ -83,8 +87,10 @@ def diff_marks(old, new):
     return diffs
 
 def notify(previous, current):
-    # TODO: Something notofication-y
     diffs = diff_marks(previous, current)
+
+    if not diffs:
+        return
 
     print("================================================================")
     for d in diffs:
@@ -102,6 +108,37 @@ def notify(previous, current):
                 f'[{d["course_code"]}] {d["mark_title"]}: removed'
             )
     print("================================================================")
+
+    lines = []
+    lines.append("VTOP Watchdog")
+    lines.append("Change detected\n")
+
+    for d in diffs:
+        if d["type"] == "changed":
+            lines.append(
+                f'[{d["course_code"]}] {d["mark_title"]}: '
+                f'{d["old_scored"]} -> {d["new_scored"]}'
+            )
+        elif d["type"] == "added":
+            lines.append(
+                f'[{d["course_code"]}] {d["mark_title"]}: added'
+            )
+        elif d["type"] == "removed":
+            lines.append(
+                f'[{d["course_code"]}] {d["mark_title"]}: removed'
+            )
+
+    lines.append("")
+
+    msg = "\n".join(lines)
+
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": msg
+    }
+
+    r = requests.post(url, json=payload, timeout=15)
+    r.raise_for_status()
 
 def now():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")

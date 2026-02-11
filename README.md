@@ -24,5 +24,5 @@ TODO:
  - [ ] error handlers
  - [X] automatic cookie fetching (gotta deal with captcha)
  - [ ] extend to more than just the marks page
- - [ ] notifying the user
+ - [X] notifying the user
  - [ ] maybe make an exe

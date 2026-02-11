@@ -872,6 +872,18 @@
           "class_average": "",
           "mark_posted_strength": "",
           "remark": ""
+        },
+        {
+          "sl_no": "60",
+          "mark_title": "Final Assessment Test - 2",
+          "max_mark": "100",
+          "weightage_percent": "40",
+          "status": "Present",
+          "scored_mark": "80.0",
+          "weightage_mark": "28",
+          "class_average": "",
+          "mark_posted_strength": "",
+          "remark": ""
         }
       ]
     },
@@ -997,11 +1009,11 @@
         {
           "sl_no": "10",
           "mark_title": "Assessment - 10",
-          "max_mark": "10",
-          "weightage_percent": "6",
+          "max_mark": "100",
+          "weightage_percent": "60",
           "status": "Present",
-          "scored_mark": "10.0",
-          "weightage_mark": "6",
+          "scored_mark": "100.0",
+          "weightage_mark": "60",
           "class_average": "",
           "mark_posted_strength": "",
           "remark": ""
@@ -1087,18 +1099,6 @@
           "status": "Present",
           "scored_mark": "7.0",
           "weightage_mark": "7",
-          "class_average": "",
-          "mark_posted_strength": "",
-          "remark": ""
-        },
-        {
-          "sl_no": "6",
-          "mark_title": "Final Assessment Test",
-          "max_mark": "100",
-          "weightage_percent": "40",
-          "status": "Present",
-          "scored_mark": "86.0",
-          "weightage_mark": "34.4",
           "class_average": "",
           "mark_posted_strength": "",
           "remark": ""
