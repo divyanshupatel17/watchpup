@@ -33,10 +33,6 @@ def save_current(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 def diff_marks(old, new):
-    """
-    old, new are the wrapped objects:
-    { "STATUS": "OK", "data": [...] }
-    """
 
     def flatten(snapshot):
         out = {}
