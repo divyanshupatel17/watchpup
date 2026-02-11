@@ -1,15 +1,45 @@
-# Python-generated files
+# Python
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
 build/
 dist/
-wheels/
-*.egg-info
+*.egg-info/
+.pytest_cache/
 
-# Virtual environments
-.venv
+# Model weights (large file)
+vellore_weights.json
 
-# Not to be pushed
-static/*
-.env
-temp.txt
+# Credentials (never commit these!)
+*.env
+credentials.txt
+.credentials
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+credentials.json
+
+# Data files (contains personal information)
+data/
+data/*.json
+
+# Debug files
+debug/
+debug/*.html
+debug/*.png
