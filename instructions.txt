@@ -5,3 +5,10 @@ Getting the cookies from VTOP:
 - CSRF: doStudentMarkView -> Payload
 - JSESSIONID: doStudentMarkView -> Headers -> Request Headers -> Cookie (Beginning)
 - SERVERID: doStudentMarkView -> Headers -> Request Headers -> Cookie (End)
+
+Authentication req:
+- REGD
+- PASS
+- CAPTCHA
+
+list of semesters and their mapping: StudentTimeTableChn

@@ -22,7 +22,7 @@ pip install -r requirements.txt
 TODO:
  - [X] show actual change in the data
  - [ ] error handlers
- - [ ] automatic cookie fetching
+ - [ ] automatic cookie fetching (gotta deal with captcha)
  - [ ] extend to more than just the marks page
  - [ ] notifying the user
  - [ ] maybe make an exe
