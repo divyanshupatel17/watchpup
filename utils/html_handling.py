@@ -1,5 +1,9 @@
 from bs4 import BeautifulSoup
 import json
+import re
+import base64
+from pathlib import Path
+
 
 def return_json(response):
     print(f"return_json() called\n\n")
@@ -83,7 +87,51 @@ def return_json(response):
         "STATUS": "OK",
         "data": courses
     }
-    
+
+def save_captcha_image(text):
+    print("save_captcha_image() called\n\n")
+    soup = BeautifulSoup(text, "html.parser")
+        
+    captcha_block = soup.find("div", id="captchaBlock")
+    captcha_file = None
+    if captcha_block:
+        img = captcha_block.find("img")
+        if img and img.get("src"):
+            src = img["src"]
+            if src.startswith("data:image"):
+                header, encoded = src.split(",", 1)
+                data = base64.b64decode(encoded)
+                captcha_file = Path("captcha.jpg")
+                captcha_file.write_bytes(data)
+            else:
+                if src.startswith("/"):
+                    src = "https://vtopcc.vit.ac.in" + src
+                img_resp = session.get(
+                    src,
+                    headers=headers,
+                    timeout=30,
+                    verify=False
+                )
+
+                img_resp.raise_for_status()
+
+                captcha_file = Path("captcha.jpg")
+                captcha_file.write_bytes(img_resp.content)
+
+    if captcha_file:
+        print("Captcha saved as:", captcha_file.resolve())
+    else:
+        print("No captcha image found (probably no-captcha flow)")
+
+def extract_csrf(html):
+    m = re.search(
+        r'<input[^>]+name="_csrf"[^>]+value="([^"]+)"',
+        html
+    )
+    if not m:
+        raise RuntimeError("CSRF token not found in page")
+    return m.group(1)
+
 if __name__ == "__main__":
     result = return_json()
     with open("temp.json", "w", encoding="utf-8") as f:
