@@ -81,18 +81,33 @@ class VTOPWatchdog:
     def load_last_state(self):
         """Load last known state with hashes"""
         if not os.path.exists(self.last_state_file):
+            print(f"[Watchdog] No previous state found - first run")
             return {}
         
         try:
             with open(self.last_state_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception:
+                state = json.load(f)
+                print(f"[Watchdog] Loaded previous state from {self.last_state_file}")
+                return state
+        except json.JSONDecodeError:
+            print(f"[Watchdog] Invalid state file - treating as first run")
+            return {}
+        except Exception as e:
+            print(f"[Watchdog] Error loading state: {e} - treating as first run")
             return {}
     
     def save_last_state(self, state):
         """Save current state with hashes"""
-        with open(self.last_state_file, 'w', encoding='utf-8') as f:
-            json.dump(state, f, indent=2, ensure_ascii=False)
+        try:
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(self.last_state_file) if os.path.dirname(self.last_state_file) else '.', exist_ok=True)
+            
+            with open(self.last_state_file, 'w', encoding='utf-8') as f:
+                json.dump(state, f, indent=2, ensure_ascii=False)
+            
+            print(f"[Watchdog] State saved to {self.last_state_file}")
+        except Exception as e:
+            print(f"[Watchdog] Error saving state: {e}")
     
     def detect_profile_changes(self, old_data, new_data):
         """Detect profile changes"""

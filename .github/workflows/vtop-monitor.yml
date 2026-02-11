@@ -60,8 +60,23 @@ jobs:
         path: .
       continue-on-error: true
     
-    - name: Create data directory
-      run: mkdir -p data
+    - name: Initialize state files if not exist
+      run: |
+        # Create data directory
+        mkdir -p data
+        
+        # Create empty last_state.json if it doesn't exist
+        if [ ! -f "last_state.json" ]; then
+          echo '{}' > last_state.json
+          echo "Created empty last_state.json for first run"
+        else
+          echo "Found existing last_state.json"
+        fi
+        
+        # List current state
+        echo "Current state files:"
+        ls -lh last_state.json 2>/dev/null || echo "  No last_state.json"
+        ls -lh data/*.json 2>/dev/null || echo "  No data files yet"
     
     - name: Run single check
       id: run_check
@@ -97,8 +112,9 @@ jobs:
         name: last-state
         path: |
           last_state.json
-          data/*.json
+          data/
         retention-days: 90
+        if-no-files-found: warn
     
     - name: Upload logs on failure
       uses: actions/upload-artifact@v4

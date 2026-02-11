@@ -165,6 +165,50 @@ async def main():
                 print("="*70)
             print(f"\nAll data saved to: data/")
             
+            # Create/update last_state.json for watchdog
+            try:
+                import json
+                import hashlib
+                
+                state = {}
+                
+                # Add profile hash
+                if os.path.exists('data/profile-info-data.json'):
+                    with open('data/profile-info-data.json', 'r', encoding='utf-8') as f:
+                        profile_data = json.load(f)
+                        state['profile_hash'] = hashlib.sha256(
+                            json.dumps(profile_data, sort_keys=True).encode()
+                        ).hexdigest()
+                        state['profile_data'] = profile_data
+                
+                # Add attendance hash
+                if os.path.exists('data/attendance-data.json'):
+                    with open('data/attendance-data.json', 'r', encoding='utf-8') as f:
+                        attendance_data = json.load(f)
+                        state['attendance_hash'] = hashlib.sha256(
+                            json.dumps(attendance_data, sort_keys=True).encode()
+                        ).hexdigest()
+                        state['attendance_data'] = attendance_data
+                
+                # Add marks hash
+                if os.path.exists('data/marks-data.json'):
+                    with open('data/marks-data.json', 'r', encoding='utf-8') as f:
+                        marks_data = json.load(f)
+                        state['marks_hash'] = hashlib.sha256(
+                            json.dumps(marks_data, sort_keys=True).encode()
+                        ).hexdigest()
+                        state['marks_data'] = marks_data
+                
+                from datetime import datetime
+                state['last_check'] = datetime.now().isoformat()
+                
+                with open('last_state.json', 'w', encoding='utf-8') as f:
+                    json.dump(state, f, indent=2, ensure_ascii=False)
+                
+                print(f"State file updated: last_state.json")
+            except Exception as e:
+                print(f"Warning: Could not update state file: {e}")
+            
         else:
             print("AUTHENTICATION FAILED")
             print("="*70)
