@@ -1,99 +1,176 @@
-import os
-import base64
 import requests
+import re
+import base64
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
-from dotenv import load_dotenv
-import urllib3
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-load_dotenv()
-
-LOGIN_URL = "https://vtopcc.vit.ac.in/vtop/login"
-
-JSESSIONID = os.getenv("VTOP_JSESSIONID")
-SERVERID = os.getenv("VTOP_SERVERID", "vt1")
+from pathlib import Path
 
 
-def fetch_captcha_image():
+BASE = "https://vtopcc.vit.ac.in/vtop"
+
+
+def extract_csrf(html: str) -> str:
+    """
+    Extracts CSRF value from a hidden input
+    """
+    m = re.search(
+        r'<input[^>]+name="_csrf"[^>]+value="([^"]+)"',
+        html
+    )
+    if not m:
+        raise RuntimeError("CSRF token not found in page")
+    return m.group(1)
+
+
+def login_and_get_csrf_auth(username: str, password: str) -> str:
+
+    session = requests.Session()
 
     headers = {
         "User-Agent": "Mozilla/5.0",
-        "Referer": "https://vtopcc.vit.ac.in/vtop/content",
+        "X-Requested-With": "XMLHttpRequest"
     }
 
-    cookies = {
-        "JSESSIONID": JSESSIONID,
-        "SERVERID": SERVERID
-    }
+    # ------------------------------------------------------------
+    # 1. /open/page   (GET)  → csrf_unauth
+    # ------------------------------------------------------------
 
-    resp = requests.get(
-        LOGIN_URL,
+    r1 = session.get(
+        f"{BASE}/open/page",
         headers=headers,
-        cookies=cookies,
-        verify=False,
-        timeout=30
+        timeout=30,
+        verify=False
     )
 
-    resp.raise_for_status()
+    r1.raise_for_status()
+    csrf_unauth = extract_csrf(r1.text)
 
-    soup = BeautifulSoup(resp.text, "html.parser")
+    print("csrf_unauth:", csrf_unauth)
+
+    # ------------------------------------------------------------
+    # 2. /prelogin/setup  (POST)
+    # ------------------------------------------------------------
+
+    r2 = session.post(
+        f"{BASE}/prelogin/setup",
+        data={
+            "_csrf": csrf_unauth,
+            "flag": "VTOP"
+        },
+        headers=headers,
+        timeout=30,
+        verify=False
+    )
+
+    r2.raise_for_status()
+
+    # ------------------------------------------------------------
+    # 3. /login   (GET) → captcha page
+    # ------------------------------------------------------------
+
+    r3 = session.get(
+        f"{BASE}/login",
+        headers=headers,
+        timeout=30,
+        verify=False
+    )
+
+    r3.raise_for_status()
+
+    soup = BeautifulSoup(r3.text, "html.parser")
 
     captcha_block = soup.find("div", id="captchaBlock")
 
-    if not captcha_block:
-        print("captchaBlock not found (maybe no captcha on this session)")
-        return
+    captcha_file = None
 
-    img = captcha_block.find("img")
+    if captcha_block:
+        img = captcha_block.find("img")
 
-    if not img or not img.get("src"):
-        print("No captcha image found inside captchaBlock")
-        return
+        if img and img.get("src"):
 
-    img_src = img["src"]
+            src = img["src"]
 
-    print("Captcha image URL:", img_src[:80], "...")
+            # ----------------------------------------------------
+            # data:image/...;base64,...
+            # ----------------------------------------------------
+            if src.startswith("data:image"):
+                header, encoded = src.split(",", 1)
+                data = base64.b64decode(encoded)
 
-    # -----------------------------
-    # CASE 1 : inline base64 image
-    # -----------------------------
-    if img_src.startswith("data:image"):
-        print("Detected base64 embedded captcha")
+                captcha_file = Path("captcha.jpg")
+                captcha_file.write_bytes(data)
 
-        header, encoded = img_src.split(",", 1)
+            # ----------------------------------------------------
+            # normal image url
+            # ----------------------------------------------------
+            else:
+                if src.startswith("/"):
+                    src = "https://vtopcc.vit.ac.in" + src
 
-        image_bytes = base64.b64decode(encoded)
+                img_resp = session.get(
+                    src,
+                    headers=headers,
+                    timeout=30,
+                    verify=False
+                )
 
-        with open("captcha.png", "wb") as f:
-            f.write(image_bytes)
+                img_resp.raise_for_status()
 
-        print("captcha.png saved (from base64)")
-        return
+                captcha_file = Path("captcha.jpg")
+                captcha_file.write_bytes(img_resp.content)
 
-    # -----------------------------
-    # CASE 2 : normal URL image
-    # -----------------------------
-    img_url = urljoin(LOGIN_URL, img_src)
+    if captcha_file:
+        print("Captcha saved as:", captcha_file.resolve())
+    else:
+        print("No captcha image found (probably no-captcha flow)")
 
-    print("Resolved captcha URL:", img_url)
+    # ------------------------------------------------------------
+    # User enters captcha
+    # ------------------------------------------------------------
 
-    img_resp = requests.get(
-        img_url,
+    captcha_value = input("Enter captcha: ").strip()
+
+    # ------------------------------------------------------------
+    # 4. /login   (POST)
+    # ------------------------------------------------------------
+
+    r4 = session.post(
+        f"{BASE}/login",
+        data={
+            "_csrf": csrf_unauth,
+            "username": username,
+            "password": password,
+            "captchaStr": captcha_value
+        },
         headers=headers,
-        cookies=cookies,
-        verify=certifi.where(),
-        timeout=20
+        timeout=30,
+        verify=False,
+        allow_redirects=True
     )
 
-    img_resp.raise_for_status()
+    r4.raise_for_status()
 
-    with open("captcha.png", "wb") as f:
-        f.write(img_resp.content)
+    # ------------------------------------------------------------
+    # 5. /content  (GET)
+    # ------------------------------------------------------------
 
-    print("captcha.png saved (from URL)")
+    r5 = session.get(
+        f"{BASE}/content",
+        headers=headers,
+        timeout=30,
+        verify=False
+    )
 
+    r5.raise_for_status()
+
+    # ------------------------------------------------------------
+    # 6. extract csrf_auth
+    # ------------------------------------------------------------
+
+    csrf_auth = extract_csrf(r5.text)
+
+    print("csrf_auth:", csrf_auth)
+
+    return csrf_auth
 
 if __name__ == "__main__":
-    fetch_captcha_image()
+    login_and_get_csrf_auth("23BPS1136", "Vampire69?!")
