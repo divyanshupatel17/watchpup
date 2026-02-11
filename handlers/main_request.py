@@ -9,7 +9,7 @@ load_dotenv()
 
 JSESSIONID = os.getenv("VTOP_JSESSIONID")
 SERVERID = os.getenv("VTOP_SERVERID")
-REGD = os.getenv("VTOP_REGD")
+REGD = os.getenv("REGD")
 PASS = os.getenv("PASS")
 SEM = os.getenv("VTOP_SEMID")
 CSRF, session = get_csrf_auth(REGD, PASS)

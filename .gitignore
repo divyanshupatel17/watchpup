@@ -13,3 +13,7 @@ wheels/
 static/*
 .env
 temp.txt
+*.jpg
+*.png
+last_state.json
+test.json
