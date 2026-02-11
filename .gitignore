@@ -13,7 +13,7 @@ dist/
 .pytest_cache/
 
 # Model weights (large file)
-vellore_weights.json
+# vellore_weights.json
 
 # Credentials (never commit these!)
 *.env
