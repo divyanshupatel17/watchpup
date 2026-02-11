@@ -22,6 +22,7 @@ class VTOPWatchdog:
     def __init__(self):
         self.last_state_file = 'last_state.json'
         self.check_interval = int(os.getenv('CHECK_INTERVAL_HOURS', '6')) * 60 * 60
+        self.send_email_always = os.getenv('SEND_EMAIL_ALWAYS', 'false').lower() == 'true'
     
     def compute_hash(self, data):
         """Compute SHA256 hash of data"""
@@ -493,7 +494,20 @@ class VTOPWatchdog:
     
     def send_notifications(self, changes, profile_data, attendance_data, marks_data, credentials):
         """Send notifications via configured methods"""
-        if not changes:
+        # Check if we should send email
+        should_send = False
+        
+        if self.send_email_always:
+            should_send = True
+            print("[Notification] SEND_EMAIL_ALWAYS is enabled - sending email")
+        elif changes:
+            should_send = True
+            print(f"[Notification] {len(changes)} change(s) detected - sending email")
+        else:
+            print("[Notification] No changes detected and SEND_EMAIL_ALWAYS is disabled - skipping email")
+            return
+        
+        if not should_send:
             return
         
         now = datetime.now()
@@ -515,7 +529,10 @@ class VTOPWatchdog:
             try:
                 from twilio.rest import Client
                 summary = f"VTOP Update - {now.strftime('%I:%M %p')}\n\n"
-                summary += f"{len(changes)} change(s) detected\n"
+                if changes:
+                    summary += f"{len(changes)} change(s) detected\n"
+                else:
+                    summary += "No changes - routine check\n"
                 summary += "Check your email for details."
                 
                 client = Client(notifications['whatsapp']['account_sid'], notifications['whatsapp']['auth_token'])
@@ -655,6 +672,18 @@ class VTOPWatchdog:
                 print(f"\n[Watchdog] Error in main loop: {e}")
                 print("[Watchdog] Retrying in 5 minutes...")
                 await asyncio.sleep(300)
+    
+    async def run_once(self):
+        """Run watchdog once (for GitHub Actions)"""
+        print("\n" + "="*70)
+        print(" "*20 + "VTOP WATCHDOG - SINGLE CHECK")
+        print("="*70 + "\n")
+        
+        await self.check_updates()
+        
+        print("\n" + "="*70)
+        print("SINGLE CHECK COMPLETE")
+        print("="*70 + "\n")
 
 
 if __name__ == "__main__":
@@ -665,4 +694,9 @@ if __name__ == "__main__":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
     
     watchdog = VTOPWatchdog()
-    asyncio.run(watchdog.run())
+    
+    # Check if running in single-check mode (for GitHub Actions)
+    if len(sys.argv) > 1 and sys.argv[1] == '--once':
+        asyncio.run(watchdog.run_once())
+    else:
+        asyncio.run(watchdog.run())

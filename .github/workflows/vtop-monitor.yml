@@ -32,6 +32,7 @@ jobs:
         echo "VTOP_PASSWORD=${{ secrets.VTOP_PASSWORD }}" >> .env
         echo "VTOP_SEMESTER_ID=${{ secrets.VTOP_SEMESTER_ID }}" >> .env
         echo "CHECK_INTERVAL_HOURS=6" >> .env
+        echo "SEND_EMAIL_ALWAYS=${{ secrets.SEND_EMAIL_ALWAYS || 'false' }}" >> .env
         echo "GMAIL_ENABLED=true" >> .env
         echo "GMAIL_EMAIL=${{ secrets.GMAIL_EMAIL }}" >> .env
         echo "GMAIL_APP_PASSWORD=${{ secrets.GMAIL_APP_PASSWORD }}" >> .env
@@ -81,7 +82,7 @@ jobs:
     - name: Run single check
       id: run_check
       run: |
-        python main.py 2>&1 | tee run.log
+        python watchdog.py --once 2>&1 | tee run.log
         echo "exit_code=$?" >> $GITHUB_OUTPUT
       continue-on-error: true
     
