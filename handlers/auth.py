@@ -11,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 load_dotenv()
 
-MAX_RETRIES = eval(os.getenv("MAX_RETIRES"))
+MAX_RETIRES = eval(os.getenv("MAX_RETIRES"))
 REGD = os.getenv("REGD")
 PASS = os.getenv("PASS")
 
@@ -45,7 +45,7 @@ def get_csrf_auth():
     )
     r2.raise_for_status()
 
-    for attempt in range(MAX_RETRIES):
+    for attempt in range(MAX_RETIRES):
         r3 = session.get(
             f"{BASE}/login",
             headers=headers,
