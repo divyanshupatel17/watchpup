@@ -12,8 +12,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 load_dotenv()
 
-JSESSIONID = os.getenv("VTOP_JSESSIONID")
-SERVERID = os.getenv("VTOP_SERVERID")
 REGD = os.getenv("REGD")
 PASS = os.getenv("PASS")
 SEM = os.getenv("VTOP_SEMID")

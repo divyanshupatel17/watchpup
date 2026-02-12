@@ -1,7 +1,7 @@
 ./venv/Scripts/activate
 pip freeze > requirements.txt
 python -m handlers.get_html
-copy test.json last_state.json ; python watchdog.py
+copy ./static/test.json ./static/last_state.json ; python watchdog.py
    
 Getting the cookies from VTOP:
 - CSRF: doStudentMarkView -> Payload
