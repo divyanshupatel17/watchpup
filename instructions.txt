@@ -1,8 +1,16 @@
+python -m venv venv
 ./venv/Scripts/activate
-pip freeze > requirements.txt
+pip install -r requirements.txt
+python get_semid (optional)
+python watchdog.py
+
+
+# ================================ dev notes ================================
+
 python -m handlers.get_html
 copy ./static/test.json ./static/last_state.json ; python watchdog.py
    
+pip freeze > requirements.txt
 Getting the cookies from VTOP:
 - CSRF: doStudentMarkView -> Payload
 - JSESSIONID: doStudentMarkView -> Headers -> Request Headers -> Cookie (Beginning)
