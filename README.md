@@ -21,8 +21,10 @@ pip install -r requirements.txt
 
 TODO:
  - [X] show actual change in the data
- - [ ] error handlers
+ - [X] logging
  - [X] automatic cookie fetching (gotta deal with captcha)
- - [ ] extend to more than just the marks page
  - [X] notifying the user
+ - [ ] extend to more than just the marks page
+ - [ ] automatic sem id maybe?
+ - [ ] error handlers
  - [ ] maybe make an exe
