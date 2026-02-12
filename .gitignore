@@ -10,7 +10,6 @@ wheels/
 .venv
 
 # Not to be pushed
-static/*
 .env
 temp.txt
 *.jpg
