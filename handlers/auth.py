@@ -11,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 load_dotenv()
 
-MAX_RETIRES = eval(os.getenv("MAX_RETIRES"))
+MAX_RETIRES = int(os.getenv("MAX_RETIRES", "10"))
 REGD = os.getenv("REGD")
 PASS = os.getenv("PASS")
 
