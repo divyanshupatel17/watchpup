@@ -2,10 +2,10 @@
 
 A small Python watchdog script for VTOP data changes. Currently implemented only to fetch from the Marks endpoint.
 
-> NOTE: This script currently depends on an active VTOP web session. When your session expires, you must refresh:
+<!-- > NOTE: This script currently depends on an active VTOP web session. When your session expires, you must refresh:
 > - VTOP_JSESSIONID
 > - VTOP_CSRF
-> - VTOP_SERVERID
+> - VTOP_SERVERID -->
 
 ## Features
 
