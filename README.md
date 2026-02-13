@@ -30,7 +30,7 @@ You can run **VTOP WatchPup** in two different ways.
 
 ### 2. Using GH Actions (suggested)
 **Steps**
-1. Clone this repository to your own GitHub account (MIT ikr).
+1. Clone this repository to your own GitHub account (MIT ikr. No forking cuz gh doesnt allow cron jobs to run in forked repos).
 2. Open "your" repo and go to `Settings → Secrets and variables → Actions → Secrets`
 3. Create new repository secrets for all required variables by referring to the `.env.example` file:
     - `REGD`
