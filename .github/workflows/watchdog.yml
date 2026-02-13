@@ -2,7 +2,11 @@ name: Watchdog job
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/30 * * * *"
+    # - cron: "*/mins */hours * * *"
+    # the above is an example for quick config
+    # refer the gh actions cron docs to make your own scheduling (mine runs every 30 mins)
+
   workflow_dispatch:
 
 jobs:
