@@ -1,16 +1,8 @@
 import time
 import requests
 import os
-from dotenv import load_dotenv
 from pathlib import Path
 import sys
-
-if getattr(sys, "frozen", False):
-    base_dir = Path(sys.executable).parent
-else:
-    base_dir = Path(__file__).parent
-
-load_dotenv(base_dir / ".env")
 
 from .parse_html import get_captcha_image, get_csrf, check_captcha
 from .captcha import solve_captcha
@@ -18,14 +10,9 @@ from .captcha import solve_captcha
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-MAX_RETIRES = int(os.getenv("MAX_RETIRES"))
-# MAX_RETIRES = 10
-REGD = os.getenv("REGD")
-PASS = os.getenv("PASS")
-
 BASE = "https://vtopcc.vit.ac.in/vtop"
 
-def get_csrf_auth():
+def get_csrf_auth(REGD, PASS, MAX_RETIRES):
     session = requests.Session()
     headers = {
         "User-Agent": "Mozilla/5.0",
@@ -53,7 +40,7 @@ def get_csrf_auth():
     )
     r2.raise_for_status()
 
-    for attempt in range(MAX_RETIRES):
+    for attempt in range(int(MAX_RETIRES)):
         r3 = session.get(
             f"{BASE}/login",
             headers=headers,

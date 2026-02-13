@@ -2,28 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import os
-from dotenv import load_dotenv
 from pathlib import Path
 import sys
-
-if getattr(sys, "frozen", False):
-    base_dir = Path(sys.executable).parent
-else:
-    base_dir = Path(__file__).parent
-
-load_dotenv(base_dir / ".env")
 
 from .auth import get_csrf_auth
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-REGD = os.getenv("REGD")
-PASS = os.getenv("PASS")
-SEM = os.getenv("VTOP_SEMID")
-CSRF, session = get_csrf_auth()
-
-BASE = "https://vtopcc.vit.ac.in/vtop"
 
 headers = {
     "Origin": "https://vtopcc.vit.ac.in",
@@ -32,13 +17,21 @@ headers = {
     "User-Agent": "Mozilla/5.0",
 }
 
-data = {
-    "authorizedID": REGD,
-    "semesterSubId": SEM,
-    "_csrf": CSRF,
-}
+def setup(_REGD, _PASS, _MAX_RETIRES):
+    REGD = _REGD
+    PASS = _PASS
+    MAX_RETIRES = _MAX_RETIRES
+    global CSRF, session
+    CSRF, session = get_csrf_auth(REGD, PASS, MAX_RETIRES)
+    
+BASE = "https://vtopcc.vit.ac.in/vtop"
 
-def get_marks_html():
+def get_marks_html(REGD, SEM):
+    data = {
+        "authorizedID": REGD,
+        "semesterSubId": SEM,
+        "_csrf": CSRF,
+    }
     response = session.post(
         f"{BASE}/examinations/doStudentMarkView",
         headers=headers,
@@ -48,7 +41,12 @@ def get_marks_html():
     )
     return response
 
-def get_grades_html():
+def get_grades_html(REGD, SEM):
+    data = {
+        "authorizedID": REGD,
+        "semesterSubId": SEM,
+        "_csrf": CSRF,
+    }
     response = session.post(
         f"{BASE}/examinations/examGradeView/doStudentGradeView",
         headers=headers,
@@ -58,7 +56,7 @@ def get_grades_html():
     )
     return response
 
-def get_ghist_html():
+def get_ghist_html(REGD):
     data = {
         "authorizedID": REGD,
         "verifyMenu": "true",
@@ -74,7 +72,7 @@ def get_ghist_html():
     )
     return response
 
-def get_calendar_html():
+def get_calendar_html(REGD, SEM):
     data1 = {
         "authorizedID": REGD,
         "classGroupId": "ALL",
@@ -123,7 +121,7 @@ def get_calendar_html():
     
     return "".join(responses)
 
-def logout():
+def logout(REGD):
     data = {
         "authorizedID": REGD,
         "_csrf": CSRF,

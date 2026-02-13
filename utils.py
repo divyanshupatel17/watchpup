@@ -1,5 +1,4 @@
 import os
-from dotenv import load_dotenv
 from pathlib import Path
 import json
 import hashlib
@@ -7,21 +6,11 @@ from datetime import datetime
 import requests
 import sys
 
-if getattr(sys, "frozen", False):
-    base_dir = Path(sys.executable).parent
-else:
-    base_dir = Path(__file__).parent
-
-load_dotenv(base_dir / ".env")
-print(f"ENV: {base_dir}")
-from handlers.get_html import get_marks_html, get_grades_html, get_ghist_html, logout, get_calendar_html
+from handlers.get_html import get_marks_html, get_grades_html, get_ghist_html, logout, get_calendar_html, setup
 from handlers.parse_html import get_marks_json, get_grades_json, get_cgpa_json, get_calendar_json
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
-CHAT_ID = os.getenv("TG_CHAT_ID")
 
 STATE_FILE = Path.home() / ".watchpup" / "last_saved.json"
 STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -30,7 +19,6 @@ print(f"STATE: {STATE_FILE}")
 
 
 # STATE_FILE = Path("./static/last_state.json")
-url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
 # def handle_vtop():
 #     marks_html = get_marks_html()
@@ -58,17 +46,18 @@ url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 #         }
 #     }
 
-def handle_vtop():
-    marks_html = get_marks_html()
+def handle_vtop(REGD, PASS, SEM, MAX_RETIRES):
+    setup(REGD, PASS, MAX_RETIRES)
+    marks_html = get_marks_html(REGD, SEM)
     marks_json = get_marks_json(marks_html)
 
-    grades_html = get_grades_html()
+    grades_html = get_grades_html(REGD, SEM)
     grades_json = get_grades_json(grades_html)
 
-    cgpa_html = get_ghist_html()
+    cgpa_html = get_ghist_html(REGD)
     cgpa_json = get_cgpa_json(cgpa_html)
 
-    calendar_html = get_calendar_html()
+    calendar_html = get_calendar_html(REGD, SEM)
     calendar_json = get_calendar_json(calendar_html)
 
     marks_ok = isinstance(marks_json, dict) and marks_json.get("MARKS_STATUS") == "OK"
@@ -262,7 +251,7 @@ def diff_grades(old_state, new_state):
 
     return diffs
 
-def notify(previous, current):
+def notify(previous, current, BOT_TOKEN, CHAT_ID):
     diffs = []
 
     if (
@@ -402,6 +391,7 @@ def notify(previous, current):
         "chat_id": CHAT_ID,
         "text": msg
     }
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
     r = requests.post(url, json=payload, timeout=15)
     r.raise_for_status()

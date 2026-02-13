@@ -26,7 +26,13 @@ logging.basicConfig(
     format="%(message)s"
 )
 
+REGD = os.getenv("REGD")
+PASS = os.getenv("PASS")
+VTOP_SEMID = os.getenv("VTOP_SEMID")
 INTERVAL_SECONDS = eval(os.getenv("INTERVAL_SECONDS"))
+MAX_RETIRES=os.getenv("MAX_RETIRES")
+TG_BOT_TOKEN=os.getenv("TG_BOT_TOKEN")
+TG_CHAT_ID=os.getenv("TG_CHAT_ID")
 
 def main():
     previous = load_previous()
@@ -40,7 +46,7 @@ def main():
     while True:
         try:
             print("Watchdog running...")
-            current = handle_vtop()
+            current = handle_vtop(REGD, PASS, VTOP_SEMID, MAX_RETIRES)
 
             status = current.get("STATUS")
 
@@ -60,7 +66,7 @@ def main():
 
             elif current_fp != previous_fp:
                 logging.info(f"{now()} STATUS: Changes Found")
-                notify(previous["data"], current_data)
+                notify(previous["data"], current_data, TG_BOT_TOKEN, TG_CHAT_ID)
                 logging.info(f"{now()} STATUS: Notification sent")
                 save_current(current)
                 previous = current
@@ -69,7 +75,7 @@ def main():
             else:
                 logging.info(f"{now()} STATUS: No Change")
             
-            logout()
+            logout(REGD)
 
         except Exception:
             logging.error(traceback.format_exc())
