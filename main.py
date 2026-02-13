@@ -10,24 +10,26 @@ if getattr(sys, "frozen", False):
 else:
     BASE_DIR = Path(__file__).parent
 
-from dotenv import load_dotenv
-load_dotenv(BASE_DIR / ".env")
-REGD = os.getenv("REGD")
-PASS = os.getenv("PASS")
-VTOP_SEMID = os.getenv("VTOP_SEMID")
-INTERVAL_SECONDS = eval(os.getenv("INTERVAL_SECONDS"))
-MAX_RETIRES=os.getenv("MAX_RETIRES")
-TG_BOT_TOKEN=os.getenv("TG_BOT_TOKEN")
-TG_CHAT_ID=os.getenv("TG_CHAT_ID")
 
 
-# REGD = os.environ.get("REGD")
-# PASS = os.environ.get("PASS")
-# VTOP_SEMID = os.environ.get("VTOP_SEMID")
-# INTERVAL_SECONDS = eval(os.environ.get("INTERVAL_SECONDS"))
-# MAX_RETIRES=os.environ.get("MAX_RETIRES")
-# TG_BOT_TOKEN=os.environ.get("TG_BOT_TOKEN")
-# TG_CHAT_ID=os.environ.get("TG_CHAT_ID")
+# from dotenv import load_dotenv
+# load_dotenv(BASE_DIR / ".env")
+# REGD = os.getenv("REGD")
+# PASS = os.getenv("PASS")
+# VTOP_SEMID = os.getenv("VTOP_SEMID")
+# INTERVAL_SECONDS = eval(os.getenv("INTERVAL_SECONDS"))
+# MAX_RETIRES=os.getenv("MAX_RETIRES")
+# TG_BOT_TOKEN=os.getenv("TG_BOT_TOKEN")
+# TG_CHAT_ID=os.getenv("TG_CHAT_ID")
+
+
+REGD = os.environ.get("REGD")
+PASS = os.environ.get("PASS")
+VTOP_SEMID = os.environ.get("VTOP_SEMID")
+INTERVAL_SECONDS = eval(os.environ.get("INTERVAL_SECONDS"))
+MAX_RETIRES=os.environ.get("MAX_RETIRES")
+TG_BOT_TOKEN=os.environ.get("TG_BOT_TOKEN")
+TG_CHAT_ID=os.environ.get("TG_CHAT_ID")
 
 from utils import handle_vtop, get_hash, load_previous, save_current, diff_calendar, diff_grades, diff_marks, notify, now
 from handlers.get_html import logout
