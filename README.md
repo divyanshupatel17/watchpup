@@ -25,13 +25,14 @@ You can run **VTOP WatchPup** in two different ways.
 3. Inside the extracted folder, create the `.env` file
 4. Open the provided `.env.example` file and copy its contents into the newly created `.env` file.
 5. Fill in all required values in `.env` by following the examples in `.env.example`.
-6. Run the executable once to verify that it starts correctly (raise an issue if it doesn't).
-7. Add the executable to your system’s background/startup processes so that it keeps running automatically.
+6. Run the `helper.exe` first and get the sem id of your choice and paste it in the `.env` (you can change the sem id whenever you want to change the focus of your watchdog)
+7. Run the `watchpup.exe` (raise an issue if it doesn't work as intended).
+7. Add the `watchpup.exe` to your system’s background/startup processes so that it keeps running automatically (or whatever).
 
 ### 2. Using GH Actions (suggested)
 **Steps**
 1. Clone this repository to your own GitHub account (MIT ikr. No forking cuz gh doesnt allow cron jobs to run in forked repos).
-2. Open "your" repo and go to `Settings → Secrets and variables → Actions → Secrets`
+2. Open "your" repo and go to `Settings -> Secrets and variables -> Actions -> Secrets`
 3. Create new repository secrets for all required variables by referring to the `.env.example` file:
     - `REGD`
     - `PASS`
