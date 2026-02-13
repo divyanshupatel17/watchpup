@@ -61,7 +61,6 @@ def handle_vtop():
     cgpa_ok   = isinstance(cgpa_json, dict)   and cgpa_json.get("CGPA_STATUS") == "OK"
     cal_ok    = isinstance(calendar_json, list)
 
-    # at least one section must be usable
     global_status = "OK" if (marks_ok or grades_ok or cgpa_ok or cal_ok) else "ERROR"
 
     return {
@@ -251,9 +250,20 @@ def diff_grades(old_state, new_state):
 def notify(previous, current):
     diffs = []
 
-    diffs.extend(diff_marks(previous, current))
-    diffs.extend(diff_grades(previous, current))
+    if (
+        previous.get("marks", {}).get("MARKS_STATUS") == "OK"
+        and current.get("marks", {}).get("MARKS_STATUS") == "OK"
+    ):
+        diffs.extend(diff_marks(previous, current))
 
+    if (
+        previous.get("grades", {}).get("GRADES_STATUS") == "OK"
+        and current.get("grades", {}).get("GRADES_STATUS") == "OK"
+    ):
+        diffs.extend(diff_grades(previous, current))
+    
+    # diffs.extend(diff_marks(previous, current))
+    # diffs.extend(diff_grades(previous, current))
 
     old_cgpa = None
     new_cgpa = None
@@ -270,11 +280,19 @@ def notify(previous, current):
         old_cgpa != new_cgpa
     )
     
-    calendar_diffs = diff_calendar(
-        previous.get("calendar", []),
-        current.get("calendar", [])
-    )
-   
+    if (
+        isinstance(previous.get("calendar"), list)
+        and isinstance(current.get("calendar"), list)
+        and previous.get("calendar")
+        and current.get("calendar")
+    ):
+        calendar_diffs = diff_calendar(
+            previous.get("calendar"),
+            current.get("calendar")
+        )
+    else:
+        calendar_diffs = []
+
     if not diffs and not cgpa_changed and not calendar_diffs:
         return
 
@@ -364,7 +382,7 @@ def notify(previous, current):
                 )
 
     msg = "\n".join(lines)
-    
+    # print(msg)
     payload = {
         "chat_id": CHAT_ID,
         "text": msg
