@@ -56,3 +56,5 @@ exe release
 
 
 git push origin exec
+
+stupid bug: every time the actions workflow starts, it starts in a new system, and the last_state.json is re initialised, never being compared with the true last_state.json, and always being initialised on every run, essentially giving no notification because for it, the changes never actually happened.
