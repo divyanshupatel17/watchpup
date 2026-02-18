@@ -53,7 +53,7 @@ PASS=xxxxxxxxxxxx
 
 INTERVAL_SECONDS =xxxxxxxxxxx # in seconds
 MAX_RETIRES=10 # to skip the google captcha
-GITHUB_ACTIONS=xxxxxxx
+GH_ACTIONS=xxxxxxx
 
 TG_BOT_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxx
 TG_CHAT_ID=xxxxxxxxxxxxxxxxxxxx

@@ -15,7 +15,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import os
 from pathlib import Path
 
-if os.getenv("GITHUB_ACTIONS") == "true":
+if os.getenv("GH_ACTIONS") == "true":
     STATE_FILE = Path("state/last_saved.json")
 else:
     STATE_FILE = Path.home() / ".watchpup" / "last_saved.json"
