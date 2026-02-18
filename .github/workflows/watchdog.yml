@@ -42,5 +42,5 @@ jobs:
           git config user.name "watchpup-bot"
           git config user.email "bot@watchpup"
           git add state/last_saved.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update watchdog state"
+          git diff --quiet && git diff --staged --quiet || git commit -m "bot: update state"
           git push
