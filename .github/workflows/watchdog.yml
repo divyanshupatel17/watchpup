@@ -23,9 +23,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Ensure state folder exists
-        run: mkdir -p state
-
       - name: Run watchdog
         env:
           REGD: ${{ secrets.REGD }}
@@ -34,6 +31,7 @@ jobs:
           MAX_RETIRES: ${{ secrets.MAX_RETIRES }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          GH_ACTIONS: ${{ secrets.GH_ACTIONS }}
         run: python main.py
 
       - name: Commit updated state
