@@ -18,9 +18,9 @@ A small Python watchdog script for VTOP data changes. Currently implemented only
 
 You can run **VTOP WatchPup** in two different ways.
 
-### 1. Using the windows exe - local compute (not yet implemented)
+### 1. Using the windows exe - local compute
 **Steps**
-1. Go to the repository **Releases** page and download the latest executable package.
+1. Go to the repository **Releases** page and download the latest executable (watchdog.zip).
 2. Extract the downloaded archive.
 3. Inside the extracted folder, create the `.env` file
 4. Open the provided `.env.example` file and copy its contents into the newly created `.env` file.
@@ -41,7 +41,58 @@ You can run **VTOP WatchPup** in two different ways.
     - `MAX_RETIRES`
     - `TG_BOT_TOKEN`
     - `TG_CHAT_ID`
-5. You can start it manually from the **Actions** tab using the *workflow_dispatch* trigger, or let it run automatically based on the configured schedule.
+5. make the `.github/workflows/main.yml` file and paste the following in it and push it to "your" repo again.
+
+```
+name: Watchdog job
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" 
+    # - cron: "*/mins */hours * * *"
+    # the above is an example for quick config
+    # refer the gh actions cron docs to make your own scheduling (mine runs every 30 mins)
+  workflow_dispatch:
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run watchdog
+        env:
+          GH_ACTIONS: "true"
+          REGD: ${{ secrets.REGD }}
+          PASS: ${{ secrets.PASS }}
+          VTOP_SEMID: ${{ secrets.VTOP_SEMID }}
+          MAX_RETIRES: ${{ secrets.MAX_RETIRES }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+        run: python main.py
+
+      - name: Commit updated state
+        run: |
+          git config user.name "watchpup-bot"
+          git config user.email "bot@watchpup"
+          git add state/last_saved.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "bot: update state"
+          git push
+```
+
+> Note: Actions implementation saves the last state by commiting it back to the repository, so if you're insecure abt ur marks or smtg, make the repo private but also keep in mind the 2000 minutes limit on actions' private repo.
 
 ### If you want to build it urself
 1. Clone
@@ -68,7 +119,7 @@ TODO:
  - [X] notifying the user
  - [X] automatic sem id maybe
  - [X] extend to more than just the marks page (~~grades~~, ~~cgpa~~, ~~calendar~~)
+ - [X] maybe make an exe
+ - [X] something so the user doesnt have to run get_semid
  - [ ] send the sub name instead of sub code
- - [ ] maybe make an exe
- - [ ] something so the user doesnt have to run get_semid
  - [ ] error handlers
