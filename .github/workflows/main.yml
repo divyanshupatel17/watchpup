@@ -1,46 +1,46 @@
-name: Watchdog job
+# name: Watchdog job
 
-on:
-  schedule:
-    - cron: "*/30 * * * *" 
-    # - cron: "*/mins */hours * * *"
-    # the above is an example for quick config
-    # refer the gh actions cron docs to make your own scheduling (mine runs every 30 mins)
-  workflow_dispatch:
+# on:
+#   schedule:
+#     - cron: "*/30 * * * *" 
+#     # - cron: "*/mins */hours * * *"
+#     # the above is an example for quick config
+#     # refer the gh actions cron docs to make your own scheduling (mine runs every 30 mins)
+#   workflow_dispatch:
 
-jobs:
-  watchdog:
-    runs-on: ubuntu-latest
+# jobs:
+#   watchdog:
+#     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
+#     permissions:
+#       contents: write
 
-    steps:
-      - uses: actions/checkout@v4
+#     steps:
+#       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.12"
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+#       - name: Install dependencies
+#         run: pip install -r requirements.txt
 
-      - name: Run watchdog
-        env:
-          GH_ACTIONS: "true"
-          REGD: ${{ secrets.REGD }}
-          PASS: ${{ secrets.PASS }}
-          VTOP_SEMID: ${{ secrets.VTOP_SEMID }}
-          MAX_RETIRES: ${{ secrets.MAX_RETIRES }}
-          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
-        run: python main.py
+#       - name: Run watchdog
+#         env:
+#           GH_ACTIONS: "true"
+#           REGD: ${{ secrets.REGD }}
+#           PASS: ${{ secrets.PASS }}
+#           VTOP_SEMID: ${{ secrets.VTOP_SEMID }}
+#           MAX_RETIRES: ${{ secrets.MAX_RETIRES }}
+#           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+#           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+#         run: python main.py
 
-      - name: Commit updated state
-        run: |
-          git config user.name "watchpup-bot"
-          git config user.email "bot@watchpup"
-          git add state/last_saved.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "bot: update state"
-          git push
+#       - name: Commit updated state
+#         run: |
+#           git config user.name "watchpup-bot"
+#           git config user.email "bot@watchpup"
+#           git add state/last_saved.json
+#           git diff --quiet && git diff --staged --quiet || git commit -m "bot: update state"
+#           git push
